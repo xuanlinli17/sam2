@@ -209,7 +209,7 @@ def load_video_frames(
         assert video_path.shape[-1] == 3, f"video tensor must have 3 channels; got {video_path.shape[-1]}"
         assert video_path.dtype == np.uint8, f"video tensor must have dtype np.uint8; got {video_path.dtype}"
         return load_video_frames_from_nparray(
-            video_path=video_path,
+            video=video_path,
             image_size=image_size,
             offload_video_to_cpu=offload_video_to_cpu,
             img_mean=img_mean,
