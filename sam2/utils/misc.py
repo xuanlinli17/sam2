@@ -9,7 +9,7 @@ import warnings
 from threading import Thread
 
 import numpy as np
-import torch
+import torch, torchvision
 from PIL import Image
 from tqdm import tqdm
 
@@ -96,7 +96,7 @@ def _load_img_as_tensor(img_path, image_size):
         img_np = img_np / 255.0
     else:
         raise RuntimeError(f"Unknown image dtype: {img_np.dtype} on {img_path}")
-    img = torch.from_numpy(img_np).permute(2, 0, 1)
+    img = torch.from_numpy(img_np).permute(2, 0, 1)  # 3, H, W
     video_width, video_height = img_pil.size  # the original video size
     return img, video_height, video_width
 
@@ -204,10 +204,52 @@ def load_video_frames(
             async_loading_frames=async_loading_frames,
             compute_device=compute_device,
         )
+    elif isinstance(video_path, np.ndarray):
+        assert video_path.ndim == 4, f"video tensor must have 4 dimensions; got {video_path.shape}"
+        assert video_path.shape[-1] == 3, f"video tensor must have 3 channels; got {video_path.shape[-1]}"
+        assert video_path.dtype == np.uint8, f"video tensor must have dtype np.uint8; got {video_path.dtype}"
+        return load_video_frames_from_nparray(
+            video_path=video_path,
+            image_size=image_size,
+            offload_video_to_cpu=offload_video_to_cpu,
+            img_mean=img_mean,
+            img_std=img_std,
+            compute_device=compute_device,
+        )
     else:
         raise NotImplementedError(
             "Only MP4 video and JPEG folder are supported at this moment"
         )
+
+def load_video_frames_from_nparray(
+    video,
+    image_size,
+    offload_video_to_cpu,
+    img_mean=(0.485, 0.456, 0.406),
+    img_std=(0.229, 0.224, 0.225),
+    compute_device=torch.device("cuda"),
+):
+    """
+    Load the video frames from an existing np.ndarray of shape (num_frames, H, W, 3) with dtype uint8.
+
+    The frames are resized to image_size x image_size and are loaded to GPU if
+    `offload_video_to_cpu` is `False` and to CPU if `offload_video_to_cpu` is `True`.
+    """
+    img_mean = torch.tensor(img_mean, dtype=torch.float32)[:, None, None]
+    img_std = torch.tensor(img_std, dtype=torch.float32)[:, None, None]
+
+    video = torch.from_numpy(video / 255.0).permute(0, 3, 1, 2)  # num_frames, 3, H, W
+    video_height, video_width = video.shape[2], video.shape[3]  # the original image size
+    video = torchvision.transforms.functional.resize(video, (image_size, image_size))
+
+    if not offload_video_to_cpu:
+        video = video.to(compute_device)
+        img_mean = img_mean.to(compute_device)
+        img_std = img_std.to(compute_device)
+    # normalize by mean and std
+    video -= img_mean
+    video /= img_std
+    return video, video_height, video_width
 
 
 def load_video_frames_from_jpg_images(
