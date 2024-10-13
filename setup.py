@@ -8,10 +8,10 @@ import os
 from setuptools import find_packages, setup
 
 # Package metadata
-NAME = "SAM 2"
+NAME = "SAM-2"
 VERSION = "1.0"
 DESCRIPTION = "SAM 2: Segment Anything in Images and Videos"
-URL = "https://github.com/facebookresearch/segment-anything-2"
+URL = "https://github.com/facebookresearch/sam2"
 AUTHOR = "Meta AI"
 AUTHOR_EMAIL = "segment-anything@meta.com"
 LICENSE = "Apache 2.0"
@@ -47,7 +47,7 @@ EXTRA_PACKAGES = {
         "gunicorn>=23.0.0",
         "imagesize>=1.4.1",
         "pycocotools>=2.0.8",
-        "strawberry-graphql>=0.239.2",
+        "strawberry-graphql>=0.243.0",
     ],
     "dev": [
         "black==24.2.0",
@@ -79,7 +79,7 @@ CUDA_ERROR_MSG = (
     "Failed to build the SAM 2 CUDA extension due to the error above. "
     "You can still use SAM 2 and it's OK to ignore the error above, although some "
     "post-processing functionality may be limited (which doesn't affect the results in most cases; "
-    "(see https://github.com/facebookresearch/segment-anything-2/blob/main/INSTALL.md).\n"
+    "(see https://github.com/facebookresearch/sam2/blob/main/INSTALL.md).\n"
 )
 
 
@@ -165,7 +165,6 @@ setup(
     author_email=AUTHOR_EMAIL,
     license=LICENSE,
     packages=find_packages(exclude="notebooks"),
-    package_data={"": ["*.yaml"]},  # SAM 2 configuration files
     include_package_data=True,
     install_requires=REQUIRED_PACKAGES,
     extras_require=EXTRA_PACKAGES,
